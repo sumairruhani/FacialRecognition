@@ -3,8 +3,13 @@
 // Machine Learning & Teachable Machine Models
 
 //for easy lets setup some quick global variables
-var imageModelURL = 'https://teachablemachine.withgoogle.com/models/gf2JtvTHa/'; //variable used to hold path to the model
-var classifier; //variable used to hold the classifier object
+var hairModelURL = 'https://teachablemachine.withgoogle.com/models/gf2JtvTHa/'; //variable used to hold path to the model
+var glassesModelURL = 'https://teachablemachine.withgoogle.com/models/yc7riJ0kE/' // path to hold model for glasses
+var genderModelURL = 'https://teachablemachine.withgoogle.com/models/TX87sWJAZ/'; //variable used to hold path to the gender model
+
+var hairLengthClassifier; //variable used to hold the hair length classifier object
+var glassesClassifier; //variable used to hold the glasses classifier object
+var genderClassifier; //variable used to hold the gender classifier object
 
 var cam; //variable used to hold the camera object
 var label0 = "", confidence0 = 0; //for ease and just because we're only demo'ing with two classes
@@ -13,7 +18,10 @@ var label1 = "", confidence1 = 0;
 
 function preload() {
 	//p5 function - this function is automatically called by the p5 library, once only
-	classifier = ml5.imageClassifier(imageModelURL + 'model.json'); //load the model!
+	hairLengthClassifier = ml5.imageClassifier(hairModelURL + 'model.json'); //load the hair model
+	glassesClassifier = ml5.imageClassifier(glassesModelURL + 'model.json'); //load the glasses model
+	genderClassifier = ml5.imageClassifier(genderModelURL + 'model.json'); //load the gender model
+
 }
 
 
@@ -32,7 +40,10 @@ function setup() {
 
 function classify() {
 	//ml5, classify the current information stored in the camera object
-	classifier.classify(cam, processresults); //once complete execute a callback to the processresults function
+	hairLengthClassifier.classify(cam, processresults); //once complete execute a callback to the processresults function
+	glassesClassifier.classify(cam, processresults); //once complete execute a callback to the processresults function
+	genderClassifier.classify(cam, processresults); //once complete execute a callback to the processresults function
+
 }
 
 
@@ -51,8 +62,8 @@ function processresults(error, results) {
 function friendlyresults() {
 	//a simple way to return the current classification details
 	let result = "Please wait...";
-	if(label0.length > 0) {
-		result = label0 + ": " + (confidence0*100).toFixed(0) + "%" + ", " + label1 + ": " + (confidence1*100).toFixed(0) + "%";
+	if (label0.length > 0) {
+		result = label0 + ": " + (confidence0 * 100).toFixed(0) + "%" + ", " + label1 + ": " + (confidence1 * 100).toFixed(0) + "%";
 	}
 	return result;
 }
