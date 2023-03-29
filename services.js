@@ -36,58 +36,78 @@ var labelFemale = "",
 
 //p5 function - this function is automatically called by the p5 library, once only
 function preload() {
-  // img = loadImage("Datasets/Gender/Female/000002.jpg");
-  hairLengthClassifier = ml5.imageClassifier(hairModelURL + "model.json"); //load the hair model
+  // hairLengthClassifier = ml5.imageClassifier(hairModelURL + "model.json"); //load the hair model
   glassesClassifier = ml5.imageClassifier(glassesModelURL + "model.json"); //load the glasses model
-  genderClassifier = ml5.imageClassifier(genderModelURL + "model.json"); //load the gender model
+  // genderClassifier = ml5.imageClassifier(genderModelURL + "model.json"); //load the gender model
 }
 
 //p5 function - this function is autmatically called after the 'preload' function; the function is only executed once
 function setup() {
-  var viewport = createCanvas(480, 360); //p5 function to create a p5 canvas
-  // var viewport = createCanvas(178, 218); //p5 function to create a p5 canvas
+  var viewport = createCanvas(178, 218); //p5 function to create a p5 canvas
   viewport.parent("video_container"); //attach the p5 canvas to the target html div
-  frameRate(24); //set the frame rate, we dont need to high performance video
+  // frameRate(24); //set the frame rate, we dont need to high performance video
 
-  cam = createCapture(VIDEO); //p5 function, store the video information coming from the camera
-  cam.hide(); //hide the cam element
+  img = loadImage("Datasets/Glasses/Glasses_on/091559.jpg");
+
+  // cam = createCapture(VIDEO); //p5 function, store the video information coming from the camera
+  // cam.hide(); //hide the cam element
 
   classify(); //start the classifer
 }
 
 function classify() {
   //ml5, classify the current information stored in the camera object
-  hairLengthClassifier.classify(cam, processresultsHair); //once complete execute a callback to the processresults function
-  glassesClassifier.classify(cam, processresultsGlasses); //once complete execute a callback to the processresults function
-  genderClassifier.classify(cam, processresultsGender); //once complete execute a callback to the processresults function
+  // hairLengthClassifier.classify(img, processresultsHair); //once complete execute a callback to the processresults function
+  glassesClassifier.classify(img, processresultsGlasses); //once complete execute a callback to the processresults function
+  // genderClassifier.classify(img, processresultsGender); //once complete execute a callback to the processresults function
 }
 
 function processresultsHair(error, results) {
+  console.log(results);
   //a simple way to return the current classification details
   if (error) {
     //something seems to have gone wrong
     console.error("classifier error: " + error);
   } else {
-    //no errors detected, so lets grab the label and execute the classify function again
-    labelShort = results[0].label;
-    confShort = results[0].confidence;
-    labelLong = results[1].label;
-    confLong = results[1].confidence;
+    if (results[0].label == "Short Hair") {
+      labelShort = results[0].label;
+      confShort = results[0].confidence;
+      labelLong = results[1].label;
+      confLong = results[1].confidence;
+    } else {
+      labelShort = results[1].label;
+      confShort = results[1].confidence;
+      labelLong = results[0].label;
+      confLong = results[0].confidence;
+    }
     classify(); //execute the classify function again
   }
 }
 
 function processresultsGlasses(error, results) {
+  if (error) {
+    //something seems to have gone wrong
+    console.error("classifier error: " + error);
+  } else {
+    if (results[0].label == "Glasses off") {
+      labelGlassesOff = results[0].label;
+      confOff = results[0].confidence;
+      labelGlassesOn = results[1].label;
+      confOn = results[1].confidence;
+    } else {
+      labelGlassesOff = results[1].label;
+      confOff = results[1].confidence;
+      labelGlassesOn = results[0].label;
+      confOn = results[0].confidence;
+    }
+    classify(); //execute the classify function again
+  }
   //a simple way to return the current classification details
   if (error) {
     //something seems to have gone wrong
     console.error("classifier error: " + error);
   } else {
     //no errors detected, so lets grab the label and execute the classify function again
-    labelGlassesOff = results[0].label;
-    confOff = results[0].confidence;
-    labelGlassesOn = results[1].label;
-    confOn = results[1].confidence;
     classify(); //execute the classify function again
   }
 }
@@ -98,11 +118,17 @@ function processresultsGender(error, results) {
     //something seems to have gone wrong
     console.error("classifier error: " + error);
   } else {
-    //no errors detected, so lets grab the label and execute the classify function again
-    labelMale = results[0].label;
-    confMale = results[0].confidence;
-    labelFemale = results[1].label;
-    confFemale = results[1].confidence;
+    if (results[0].label == "Male") {
+      confMale = results[0].confidence;
+      labelMale = results[0].label;
+      labelFemale = results[1].label;
+      confFemale = results[1].confidence;
+    } else {
+      confMale = results[1].confidence;
+      labelMale = results[1].label;
+      labelFemale = results[0].label;
+      confFemale = results[0].confidence;
+    }
     classify(); //execute the classify function again
   }
 }
@@ -197,32 +223,37 @@ function friendlyresultsGender() {
     let confidenceLevels = `${labelMale}: ${(confMale * 100).toFixed(
       0
     )}%, ${labelFemale}: ${(confFemale * 100).toFixed(0)}%`;
-
-    switch (true) {
-      case confMale >= 0.8:
-        result = `${confidenceLevels}. Person is a male`;
-        break;
-      case confMale >= 0.6:
-        result = `${confidenceLevels}. Person is likely to be a male`;
-        break;
-      case confMale > 0.5:
-        result = `${confidenceLevels}. Person could be a male`;
-        break;
-      case confFemale >= 0.8:
-        result = `${confidenceLevels}. Person is a female`;
-        break;
-      case confFemale >= 0.6:
-        result = `${confidenceLevels}. Person is likely to be a female`;
-        break;
-      case confFemale > 0.5:
-        result = `${confidenceLevels}. Person could be a female`;
-        break;
-      default:
-        result = `${confidenceLevels}. Cannot determine the gender`;
-        break;
+    if (confFemale > confMale) {
+      switch (true) {
+        case confFemale >= 0.8:
+          result = `${confidenceLevels}. Person is a female`;
+          break;
+        case confFemale >= 0.6:
+          result = `${confidenceLevels}. Person is likely to be a female`;
+          break;
+        case confFemale > 0.5:
+          result = `${confidenceLevels}. Person could be a female`;
+          break;
+        default:
+          result = `${confidenceLevels}. Cannot determine the gender`;
+          break;
+      }
+    } else {
+      switch (true) {
+        case confMale >= 0.8:
+          result = `${confidenceLevels}. Person is a male`;
+          break;
+        case confMale >= 0.6:
+          result = `${confidenceLevels}. Person is likely to be a male`;
+          break;
+        case confMale > 0.5:
+          result = `${confidenceLevels}. Person could be a male`;
+          break;
+        default:
+          result = `${confidenceLevels}. Cannot determine the gender`;
+          break;
+      }
     }
-  } else {
-    result = "Error: Cannot determine the gender";
   }
   return result;
 }
@@ -231,7 +262,7 @@ function draw() {
   //p5 function - this function is automatically called every frame
   background("#c0c0c0"); //set the canvas default back colour
 
-  image(cam, 0, 0); //pass the video to the p5 canvas
+  image(img, 0, 0); //pass the video to the p5 canvas
   // image(img, 0, 0);
   document.getElementById("results").innerHTML = friendlyresultsHair(); //update the result string
   document.getElementById("results1").innerHTML = friendlyresultsGlasses(); //update the result string
